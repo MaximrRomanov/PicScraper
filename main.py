@@ -4,17 +4,21 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from fake_useragent import UserAgent
 import os
+import lxml
+
 
 
 def parser() -> List[str]:
     user_agent = UserAgent()
-    header = {'user-agent': f'{user_agent.chrome}'}
+    header = {
+        'user-agent': f'{user_agent.chrome}'
+    }
     base_url = 'https://mosplitka.ru/catalog/plitka/plitka-dlya-vannoy/view_product/'
     response = requests.get(base_url, headers=header)
     soup = BeautifulSoup(response.text, 'lxml')
     urls = []
     get_image_url_from_page(soup, urls)  # для главной страницы получаем список ссылок
-    # last_page_index = int(get_index_of_last_page())  # 391
+    # pagination_count = get_index_of_last_page()  # 391
     for index in range(2, 51):
         next_page_link = 'https://mosplitka.ru/catalog/plitka/plitka-dlya-vannoy/view_product/' + '?PAGEN_1=' + str(
             index)
@@ -25,8 +29,9 @@ def parser() -> List[str]:
 
 
 def get_image_url_from_page(soup: BeautifulSoup, urls: list):
-    images = soup.find('div', class_='products product-list-block plitka_new').find_all('img',
-                                                                                        class_='lazy')  # all images
+    images = soup.find(
+        'div', class_='products product-list-block plitka_new').find_all(
+        'img', class_='lazy')  # all images
 
     for image in images:
         img_url = image.attrs.get('src') or image.attrs.get('data-original')
@@ -46,11 +51,11 @@ def get_index_of_last_page() -> int:
     url = 'https://mosplitka.ru/catalog/plitka/plitka-dlya-vannoy/view_product/'
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'lxml')
-    last_page_link = soup.find_all('li', class_='pagination-catalog__item')[6].find('a', class_='pagination'
-                                                                                                '-catalog__link').get(
-        'href')
-    last_page_index = last_page_link.split('=')[-1]  # 391
-    return last_page_index
+    pagination_count = int(soup.find_all(
+        'li', class_='pagination-catalog__item')[6].find(
+        'a', class_='pagination-catalog__link').text) # 391
+
+    return pagination_count
 
 
 def download(url: str, pathname: str):
@@ -71,6 +76,7 @@ def main(pathname: str):
     print(images)
     for img in images:
         download(img, pathname)
+
 
 
 main('mosplitka photo')
